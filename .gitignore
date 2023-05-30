@@ -1,0 +1,6 @@
+.pio/
+.vscode/
+.venv/
+logs/
+src/config.h
+

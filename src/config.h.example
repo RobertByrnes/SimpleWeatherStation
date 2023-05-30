@@ -1,0 +1,49 @@
+#pragma once
+
+#ifndef SRC_CONFIG_H
+#define SRC_CONFIG_H
+
+#include <string>
+#include <Arduino.h>
+
+const bool CONFIG_DEBUG = true; // enable serial debugging
+const int CONFIG_BAUD_RATE = 115200; // serial baud rate
+
+/* WEBSOCKET REQUESTS */
+std::string CONFIG_ESP_REBOOT = "reboot";
+std::string CONFIG_ESP_UPDATE = "update";
+std::string CONFIG_ESP_PROVISION = "provision";
+
+/* WIFI CONFIG */
+const char* CONFIG_SSID = "REPLACE_WITH_SSID";
+const char* CONFIG_PASSWORD = "REPLACE_WITH_PASSWORD";
+
+/* OTA CONFIG */
+const char* CONFIG_OTA_HOSTNAME = "REPLACE_WITH_HOSTNAME";
+const char* CONFIG_OTA_PASSWORD = "REPLACE_WITH_OTA_PASSWORD";
+
+/* SERVER CONFIG */
+const char *CONFIG_HOST = "REPLACE_WITH_HOST";
+const char *CONFIG_URI = "/example/file.php";
+const int CONFIG_PORT = 443;
+const char *CONFIG_SERVER_FINGERPRINT = "9f:32:1f:bd:68:fb:85:13:9f:a3:fe:14:81:83:55:19:2a:15:74:f8";
+
+/* REQUEST CONFIG */
+String CONFIG_API_KEY = "YOUR_API_KEY";
+const char *CONFIG_SENSOR_NAME = "weather_station";
+const char* CONFIG_CONTENT_TYPE = "application/x-www-form-urlencoded";
+
+/* HTTP POST TIMER */
+// const unsigned int CONFIG_TIME_DELAY = 900000; // 15 mins
+// const unsigned int CONFIG_TIME_DELAY = 600000; // 10 mins
+// const unsigned int CONFIG_TIME_DELAY = 300000; // 5 mins
+unsigned int CONFIG_TIME_DELAY = 60000; // 1 min
+
+/* Anemometer */
+const int CONFIG_REED_SWITCH_PIN = D7; // define the Reed sensor interface
+const float CONFIG_ANEMOMETER_RADIUS = 0.09;
+
+/* BME TIMER FOR AVOIDING CRASHES */
+const int CONFIG_TIMER_DELAY_TWO = 500; 
+
+#endif
