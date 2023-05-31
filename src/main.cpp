@@ -22,14 +22,25 @@ extern "C" {
 
 // Debugging object
 struct Debug {
-    std::string otaStart = "";
-    std::string otaProgress = "";
-    std::string otaEnd = "";
-    std::string request = "";
-    std::string responsePayload = "";
-    const char* otaError = "";
-    int anemometerRevs = 0;
+  std::string otaStart = "";
+  std::string otaProgress = "";
+  std::string otaEnd = "";
+  std::string request = "";
+  std::string responsePayload = "";
+  const char* otaError = "";
+  int anemometerRevs = 0;
+  void printDebug(ESPSocketClass &socket) {
+    socket.println(otaStart.c_str());
+    socket.println(otaProgress.c_str());
+    socket.println(otaEnd.c_str());
+    socket.println(request.c_str());
+    socket.println(responsePayload.c_str());
+    socket.println(otaError);
+    socket.println(anemometerRevs);
+  }
 };
+
+
 
 /* GLOBAL VARIABLES */
 AsyncWebServer GLOBAL_WEB_SERVER(80); // create web server on port 80
@@ -39,9 +50,9 @@ os_timer_t GLOBAL_WIND_SPEED; // create timer for wind speed
 std::string GLOBAL_REQUEST_BODY = ""; // create request body
 unsigned long GLOBAL_LAST_TIME = 0; // create last time variable for timer delay 
 bool GLOBAL_RESTART_FLAG = false; // create restart flag
-int GLOBAL_ANEMOMETER_REVOLUTIONS = 0; // revolutions
+volatile int GLOBAL_ANEMOMETER_REVOLUTIONS = 0; // revolutions
 float GLOBAL_FINAL_WIND_SPEED = 0.0; // in m/s
-int GLOBAL_ANEMOMETER_RPS; // revolutions per second
+volatile int GLOBAL_ANEMOMETER_RPS; // revolutions per second
 unsigned long GLOBAL_LAST_TIME_TWO = 0; // create last time variable for timer delay
 float GLOBAL_ROTARY_TRAVEL = (CONFIG_ANEMOMETER_RADIUS * 2) * 3.1414; // rotary travel
 
@@ -67,8 +78,10 @@ IRAM_ATTR void Anemometer_ISR()
  */
 void calculateWS(void *pArg)
 {
+  noInterrupts();
   int localAnemometerRevs = GLOBAL_ANEMOMETER_REVOLUTIONS;
   GLOBAL_ANEMOMETER_REVOLUTIONS = 0;
+  interrupts();
 
   // Use the local copy for calculations
   int localAnemometerRps = localAnemometerRevs / 5;
@@ -205,18 +218,29 @@ void setup()
     GLOBAL_DEBUG_OUTPUT.otaProgress = std::string(String(progress / (total / 100)).c_str());
   });
 
-  ArduinoOTA.onError([](ota_error_t error) {
+  const char *otaAuthError = "Auth Failed";
+  const char *otaBeginError = "Begin Failed";
+  const char *otaConnectError = "Connect Failed";
+  const char *otaReceiveError = "Receive Failed";
+  const char *otaEndError = "End Failed";
+
+  ArduinoOTA.onError([otaAuthError, otaBeginError, otaConnectError, otaReceiveError, otaEndError](ota_error_t error) {
     ESPSocket.printf("Error[%u]: ", error);
     if (error == OTA_AUTH_ERROR) {
-      GLOBAL_DEBUG_OUTPUT.otaError = "Auth Failed";
+      ESPSocket.println(otaAuthError);
+      GLOBAL_DEBUG_OUTPUT.otaError = otaAuthError;
     } else if (error == OTA_BEGIN_ERROR) {
-      GLOBAL_DEBUG_OUTPUT.otaError = "Begin Failed";
+      ESPSocket.println(otaBeginError);
+      GLOBAL_DEBUG_OUTPUT.otaError = otaBeginError;
     } else if (error == OTA_CONNECT_ERROR) {
-      GLOBAL_DEBUG_OUTPUT.otaError = "Connect Failed";
+      ESPSocket.println(otaConnectError);
+      GLOBAL_DEBUG_OUTPUT.otaError = otaConnectError;
     } else if (error == OTA_RECEIVE_ERROR) {
-      GLOBAL_DEBUG_OUTPUT.otaError = "Receive Failed";
+      ESPSocket.println(otaReceiveError);
+      GLOBAL_DEBUG_OUTPUT.otaError = otaReceiveError;
     } else if (error == OTA_END_ERROR) {
-      GLOBAL_DEBUG_OUTPUT.otaError = "End Failed";
+      ESPSocket.println(otaEndError);
+      GLOBAL_DEBUG_OUTPUT.otaError = otaEndError;
     }
   });
   ArduinoOTA.begin();
@@ -241,6 +265,8 @@ void loop()
   }
   
   if ((millis() - GLOBAL_LAST_TIME) > CONFIG_TIME_DELAY) { 
+    
+    ESPSocket.printWiFiInfo();
     GLOBAL_LAST_TIME = millis();
     WiFiClientSecure httpsClient; 
     
@@ -304,5 +330,7 @@ void loop()
        ESP.restart();
      }
     }
+
+    GLOBAL_DEBUG_OUTPUT.printDebug(ESPSocket);
   }
 }
